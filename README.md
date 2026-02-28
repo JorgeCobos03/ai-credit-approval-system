@@ -212,6 +212,29 @@ Incluir:
 
 ---
 
+## Entorno Desplegado (Producción Demo)
+
+El sistema se encuentra desplegado en un entorno cloud utilizando **Render**.
+
+Puedes acceder a la documentación interactiva (Swagger UI) en:
+
+🔗 https://ai-credit-approval-system.onrender.com/docs#/Applications/upload_document_applications__application_id__documents_post
+
+Desde esta interfaz es posible:
+
+- Crear solicitudes de crédito
+- Consultar aplicaciones
+- Subir documentos PDF
+- Visualizar el flujo completo end-to-end
+
+Este despliegue demuestra:
+
+- Capacidad de ejecución en entorno productivo
+- API accesible públicamente
+- Arquitectura preparada para escalar en infraestructura cloud
+
+---
+
 ## Example Request Payload
 
 El siguiente JSON representa el cuerpo mínimo requerido para crear una solicitud de crédito:
