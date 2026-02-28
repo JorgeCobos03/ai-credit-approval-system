@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import models, schemas
 from app.services.risk_service import generate_credit_score
 from app.services.rules_engine import evaluate_application
-from fastapi import UploadFile, File
+from app.services.document_service import extract_document_data, validate_document
 import shutil
 import os
-from app.services.document_service import extract_document_data, validate_document
 
 router = APIRouter(
     prefix="/applications",
@@ -22,17 +21,17 @@ def get_db():
     finally:
         db.close()
 
+
 @router.post("/", response_model=schemas.ApplicationResponse)
 def create_application(
     application: schemas.ApplicationCreate,
     db: Session = Depends(get_db)
 ):
-    # Generate score
+    # Generate credit score
     score = generate_credit_score()
 
-    # Evaluate rules
+    # Evaluate business rules
     status, rejection_reason = evaluate_application(application, score)
-    decision_reason = "; ".join(rejection_reason)
 
     db_application = models.Application(
         name=application.name,
@@ -45,7 +44,7 @@ def create_application(
         status=status,
         score=score,
         rejection_reason=rejection_reason
-)
+    )
 
     db.add(db_application)
     db.commit()
@@ -61,6 +60,7 @@ def get_application(application_id: int, db: Session = Depends(get_db)):
     ).first()
 
     return application
+
 
 @router.post("/{application_id}/documents")
 def upload_document(
@@ -83,7 +83,6 @@ def upload_document(
         shutil.copyfileobj(file.file, buffer)
 
     extracted_data = extract_document_data(file_path)
-
     verified, risk = validate_document(application, extracted_data)
 
     application.document_path = file_path
