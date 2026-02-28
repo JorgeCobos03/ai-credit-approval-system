@@ -16,4 +16,5 @@ def evaluate_application(application, score):
     if application.is_blacklisted:
         return "REJECTED", "Applicant is in blacklist"
 
-    return "APPROVED", "hola"
+    # Si pasa todas las reglas
+    return "APPROVED", None
