@@ -21,8 +21,7 @@ El sistema sigue una arquitectura en capas:
 
 ### Diagrama de Arquitectura
 
-![Architecture Diagram](mermaid-diagram (1).png)
-
+![Architecture Diagram](./mermaid-diagram%20(1).png)
 ---
 
 ## Modelo de Datos
@@ -38,8 +37,7 @@ Actualmente el sistema utiliza una tabla principal `applications`, que centraliz
 
 ### ERD
 
-![ERD Diagram](mermaid-diagram (2).png)
-
+![Architecture Diagram](./mermaid-diagram%20(2).png)
 ---
 
 ## Flujo del Proceso
@@ -54,8 +52,7 @@ Actualmente el sistema utiliza una tabla principal `applications`, que centraliz
 
 ### Diagrama de Flujo
 
-![Process Flow Diagram](mermaid-diagram (3).png)
-
+![Architecture Diagram](./mermaid-diagram%20(3).png)
 ---
 
 # Decisiones Técnicas
