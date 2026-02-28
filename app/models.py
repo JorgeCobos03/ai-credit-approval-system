@@ -1,31 +1,32 @@
-from sqlalchemy import Column, Integer, String, Float
-from app.database import Base
-from sqlalchemy import Column, Integer, String, Float, Text
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, Boolean
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime
-from sqlalchemy import Boolean
+from app.database import Base
+
 
 class Application(Base):
     __tablename__ = "applications"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    rfc = Column(String)
-    curp = Column(String)
-    gender = Column(String)
-    monthly_income = Column(Float)
-    
-    status = Column(String, default="PENDING")
-    score = Column(Integer, nullable=True)
-    decision_reason = Column(Text, nullable=True)
-    
-    document_path = Column(String, nullable=True)
-    document_verified = Column(String, default="PENDING")
-    risk_flag = Column(String, default="LOW")
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
+
+    # Applicant info
+    name = Column(String, nullable=False)
+    rfc = Column(String, nullable=False)
+    curp = Column(String, nullable=False)
+    gender = Column(String, nullable=False)
+
+    # Financial data
     monthly_income = Column(Float, nullable=False)
     bank_seniority_months = Column(Integer, nullable=False)
     is_blacklisted = Column(Boolean, default=False)
 
-    rejection_reason = Column(Text, nullable=True)  
+    # Decision data
+    status = Column(String, default="PENDING")
+    score = Column(Integer, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+
+    # Risk & documents
+    document_path = Column(String, nullable=True)
+    document_verified = Column(String, default="PENDING")
+    risk_flag = Column(String, default="LOW")
+
+    created_at = Column(DateTime, default=datetime.utcnow)

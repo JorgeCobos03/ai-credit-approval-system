@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class ApplicationCreate(BaseModel):
     name: str
     rfc: str
@@ -9,6 +10,7 @@ class ApplicationCreate(BaseModel):
     monthly_income: float
     bank_seniority_months: int
     is_blacklisted: bool = False
+
 
 class ApplicationResponse(BaseModel):
     id: int
