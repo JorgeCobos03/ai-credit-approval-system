@@ -31,8 +31,8 @@ def create_application(
     score = generate_credit_score()
 
     # Evaluate rules
-    status, reasons = evaluate_application(application, score)
-    decision_reason = "; ".join(reasons)
+    status, rejection_reason = evaluate_application(application, score)
+    decision_reason = "; ".join(rejection_reason)
 
     db_application = models.Application(
         name=application.name,
@@ -40,11 +40,12 @@ def create_application(
         curp=application.curp,
         gender=application.gender,
         monthly_income=application.monthly_income,
-        bank_seniority=application.bank_seniority,
+        bank_seniority_months=application.bank_seniority_months,
+        is_blacklisted=application.is_blacklisted,
         status=status,
         score=score,
-        decision_reason=decision_reason
-    )
+        rejection_reason=rejection_reason
+)
 
     db.add(db_application)
     db.commit()

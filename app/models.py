@@ -3,7 +3,8 @@ from app.database import Base
 from sqlalchemy import Column, Integer, String, Float, Text
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime
-    
+from sqlalchemy import Boolean
+
 class Application(Base):
     __tablename__ = "applications"
 
@@ -23,3 +24,9 @@ class Application(Base):
     document_verified = Column(String, default="PENDING")
     risk_flag = Column(String, default="LOW")
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    monthly_income = Column(Float, nullable=False)
+    bank_seniority_months = Column(Integer, nullable=False)
+    is_blacklisted = Column(Boolean, default=False)
+
+    rejection_reason = Column(String, nullable=True)

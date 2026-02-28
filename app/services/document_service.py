@@ -14,7 +14,8 @@ def extract_document_data(file_path: str):
     return {
         "name": "Maria Lopez",
         "address": random.choice(fake_addresses),
-        "valid_until": "2026-12-31"
+        "valid_until": "2026-12-31",
+        "is_blacklisted": True
     }
 
 
