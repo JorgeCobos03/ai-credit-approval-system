@@ -11,26 +11,14 @@ def extract_document_data(file_path):
         if extracted:
             text += extracted + "\n"
 
-    # Debug
-    print("RAW TEXT:", text)
-
-    name = None
-    address = None
-    valid_until = None
-
-    # Regex más flexible
+    # Regex flexible
     name_match = re.search(r"Nombre:\s*(.*)", text)
     address_match = re.search(r"Direcci[oó]n:\s*(.*)", text)
     date_match = re.search(r"Fecha.*?:\s*(.*)", text)
 
-    if name_match:
-        name = name_match.group(1).strip()
-
-    if address_match:
-        address = address_match.group(1).strip()
-
-    if date_match:
-        valid_until = date_match.group(1).strip()
+    name = name_match.group(1).strip() if name_match else None
+    address = address_match.group(1).strip() if address_match else None
+    valid_until = date_match.group(1).strip() if date_match else None
 
     return {
         "name": name,
@@ -38,3 +26,13 @@ def extract_document_data(file_path):
         "valid_until": valid_until,
         "is_blacklisted": False
     }
+
+
+def validate_document(application, extracted_data):
+
+    # Validar nombre
+    if extracted_data["name"] != application.name:
+        return "REJECTED", "HIGH"
+
+    # Puedes agregar más validaciones aquí
+    return "APPROVED", "LOW"
