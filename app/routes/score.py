@@ -1,12 +1,8 @@
 from fastapi import APIRouter
-import random
+from random import randint
 
-router = APIRouter(
-    prefix="/scorecredito",
-    tags=["Score"]
-)
+router = APIRouter()
 
-@router.get("/")
+@router.get("/scorecredito")
 def get_score():
-    score = random.randint(300, 900)
-    return {"score": score}
+    return {"score": randint(300, 900)}

@@ -19,8 +19,6 @@ def get_db():
 
 @router.get("/metrics")
 def get_metrics(db: Session = Depends(get_db)):
-    if not hasattr(models.Application, "created_at"):
-        return {"error": "Model not updated properly"}
 
     today = date.today()
 
@@ -38,12 +36,21 @@ def get_metrics(db: Session = Depends(get_db)):
         models.Application.status == "REJECTED"
     ).count()
 
-    approved_percentage = (approved / total * 100) if total > 0 else 0
-    rejected_percentage = (rejected / total * 100) if total > 0 else 0
+    top_reason = db.query(
+        models.Application.rejection_reason,
+        func.count(models.Application.id)
+    ).filter(
+        models.Application.rejection_reason != None
+    ).group_by(
+        models.Application.rejection_reason
+    ).order_by(
+        func.count(models.Application.id).desc()
+    ).first()
 
     return {
         "total_applications_today": total_today,
         "total_applications": total,
-        "approved_percentage": round(approved_percentage, 2),
-        "rejected_percentage": round(rejected_percentage, 2)
+        "approved_percentage": round((approved / total * 100), 2) if total else 0,
+        "rejected_percentage": round((rejected / total * 100), 2) if total else 0,
+        "top_rejection_reason": top_reason[0] if top_reason else None
     }
