@@ -1,33 +1,42 @@
-import random
+from PyPDF2 import PdfReader
 
-def extract_document_data(file_path: str):
-    """
-    Simulación de extracción IA.
-    En producción usarías OCR + LLM.
-    """
-    fake_addresses = [
-        "Av. Reforma 123, CDMX",
-        "Calle Juarez 456, Monterrey",
-        "Blvd. Independencia 789, Guadalajara"
-    ]
+
+def extract_document_data(file_path):
+    reader = PdfReader(file_path)
+    text = ""
+
+    for page in reader.pages:
+        text += page.extract_text()
+
+    # Extracción simple por búsqueda de texto
+    name = None
+    address = None
+    valid_until = None
+
+    lines = text.split("\n")
+
+    for line in lines:
+        if "Nombre:" in line:
+            name = line.replace("Nombre:", "").strip()
+        if "Dirección:" in line:
+            address = line.replace("Dirección:", "").strip()
+        if "Fecha de Vigencia:" in line:
+            valid_until = line.replace("Fecha de Vigencia:", "").strip()
 
     return {
-        "name": "Maria Lopez",
-        "address": random.choice(fake_addresses),
-        "valid_until": "2026-12-31",
-        "is_blacklisted": True
+        "name": name,
+        "address": address,
+        "valid_until": valid_until,
+        "is_blacklisted": False  # Simulación
     }
 
 
 def validate_document(application, extracted_data):
-    """
-    Validación semántica simulada.
-    """
-    risk = "LOW"
-    verified = "VERIFIED"
 
-    if extracted_data["name"].lower() != application.name.lower():
-        risk = "HIGH"
-        verified = "REJECTED"
+    # Validar nombre
+    if extracted_data["name"] != application.name:
+        return "REJECTED", "HIGH"
 
-    return verified, risk
+    # Aquí podrías validar dirección, vigencia, etc.
+
+    return "APPROVED", "LOW"
