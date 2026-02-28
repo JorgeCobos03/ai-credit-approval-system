@@ -1,4 +1,5 @@
 from PyPDF2 import PdfReader
+import re
 
 
 def extract_document_data(file_path):
@@ -6,37 +7,34 @@ def extract_document_data(file_path):
     text = ""
 
     for page in reader.pages:
-        text += page.extract_text()
+        extracted = page.extract_text()
+        if extracted:
+            text += extracted + "\n"
 
-    # Extracción simple por búsqueda de texto
+    # Debug
+    print("RAW TEXT:", text)
+
     name = None
     address = None
     valid_until = None
 
-    lines = text.split("\n")
+    # Regex más flexible
+    name_match = re.search(r"Nombre:\s*(.*)", text)
+    address_match = re.search(r"Direcci[oó]n:\s*(.*)", text)
+    date_match = re.search(r"Fecha.*?:\s*(.*)", text)
 
-    for line in lines:
-        if "Nombre:" in line:
-            name = line.replace("Nombre:", "").strip()
-        if "Dirección:" in line:
-            address = line.replace("Dirección:", "").strip()
-        if "Fecha de Vigencia:" in line:
-            valid_until = line.replace("Fecha de Vigencia:", "").strip()
+    if name_match:
+        name = name_match.group(1).strip()
+
+    if address_match:
+        address = address_match.group(1).strip()
+
+    if date_match:
+        valid_until = date_match.group(1).strip()
 
     return {
         "name": name,
         "address": address,
         "valid_until": valid_until,
-        "is_blacklisted": False  # Simulación
+        "is_blacklisted": False
     }
-
-
-def validate_document(application, extracted_data):
-
-    # Validar nombre
-    if extracted_data["name"] != application.name:
-        return "REJECTED", "HIGH"
-
-    # Aquí podrías validar dirección, vigencia, etc.
-
-    return "APPROVED", "LOW"
