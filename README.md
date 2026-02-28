@@ -149,6 +149,24 @@ Incluir:
 
 ---
 
+## Example Request Payload
+
+El siguiente JSON representa el cuerpo mínimo requerido para crear una solicitud de crédito:
+
+```json
+{
+  "name": "string",
+  "rfc": "string",
+  "curp": "string",
+  "gender": "string",
+  "monthly_income": 0,
+  "bank_seniority_months": 0,
+  "is_blacklisted": false,
+  "address": "string"
+}
+
+---
+
 # Stack Tecnológico
 
 - Python 3.11+
