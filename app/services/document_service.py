@@ -1,63 +1,61 @@
-import fitz  # PyMuPDF
+import fitz
 import re
 from pdf2image import convert_from_path
 import pytesseract
-import os
 
 
-# -----------------------------
-# EXTRAER TEXTO PDF (PyMuPDF)
-# -----------------------------
-def extract_text_pymupdf(file_path: str) -> str:
+def extract_document_data(file_path):
+
+    # ----------------------
+    # 1. Extraer texto normal
+    # ----------------------
     text = ""
     doc = fitz.open(file_path)
 
     for page in doc:
         text += page.get_text()
 
-    return text
-
-
-# -----------------------------
-# OCR SI NO HAY TEXTO
-# -----------------------------
-def extract_text_ocr(file_path: str) -> str:
-    text = ""
-    pages = convert_from_path(file_path)
-
-    for page in pages:
-        text += pytesseract.image_to_string(page)
-
-    return text
-
-
-# -----------------------------
-# EXTRACCIÓN PRINCIPAL
-# -----------------------------
-def extract_document_data(file_path):
-
-    text = extract_text_pymupdf(file_path)
-
-    # Si no encontró texto, usar OCR
+    # Si no hay texto → OCR
     if not text.strip():
-        text = extract_text_ocr(file_path)
+        pages = convert_from_path(file_path)
+        for page in pages:
+            text += pytesseract.image_to_string(page)
 
-    # -------------------------
-    # Limpieza básica
-    # -------------------------
-    text = text.replace("\n", " ")
-    text = re.sub(r"\s+", " ", text)
+    print("======= TEXTO EXTRAIDO =======")
+    print(text)
+    print("======= FIN TEXTO =======")
 
-    # -------------------------
-    # Regex más robustas
-    # -------------------------
-    name_match = re.search(r"(Nombre|Titular)[:\s]+([A-Za-zÁÉÍÓÚÑáéíóúñ ]+)", text)
-    address_match = re.search(r"(Direcci[oó]n)[:\s]+(.+?)(CP|C\.P\.|Colonia|Municipio)", text)
-    date_match = re.search(r"(Vigencia|Fecha.*?)(\d{2}/\d{2}/\d{4})", text)
+    # ----------------------
+    # Limpieza
+    # ----------------------
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
 
-    name = name_match.group(2).strip() if name_match else None
-    address = address_match.group(2).strip() if address_match else None
-    valid_until = date_match.group(2).strip() if date_match else None
+    name = None
+    address = None
+    valid_until = None
+
+    # ----------------------
+    # Detectar nombre (línea mayúsculas larga)
+    # ----------------------
+    for line in lines:
+        if line.isupper() and len(line.split()) >= 2 and not any(char.isdigit() for char in line):
+            name = line
+            break
+
+    # ----------------------
+    # Detectar dirección (línea con número)
+    # ----------------------
+    for line in lines:
+        if re.search(r"\d+", line) and any(word in line.lower() for word in ["calle", "col", "avenida", "av", "cp"]):
+            address = line
+            break
+
+    # ----------------------
+    # Detectar fecha
+    # ----------------------
+    date_match = re.search(r"\d{2}/\d{2}/\d{4}", text)
+    if date_match:
+        valid_until = date_match.group()
 
     return {
         "name": name,
@@ -65,19 +63,3 @@ def extract_document_data(file_path):
         "valid_until": valid_until,
         "is_blacklisted": False
     }
-
-
-# -----------------------------
-# VALIDACIÓN DOCUMENTO
-# -----------------------------
-def validate_document(application, extracted_data):
-
-    # Si no extrajo nada -> riesgo alto
-    if not extracted_data["name"]:
-        return "REJECTED", "HIGH"
-
-    # Comparación flexible (case insensitive)
-    if extracted_data["name"].strip().lower() != application.name.strip().lower():
-        return "REJECTED", "HIGH"
-
-    return "APPROVED", "LOW"
