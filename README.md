@@ -164,6 +164,7 @@ El siguiente JSON representa el cuerpo mínimo requerido para crear una solicitu
   "is_blacklisted": false,
   "address": "string"
 }
+```
 
 ---
 
