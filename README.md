@@ -11,6 +11,69 @@ El sistema está diseñado como un backend modular con separación clara entre c
 
 ---
 
+## Uso de IA Agregada
+
+El sistema incorpora técnicas ligeras de Inteligencia Artificial orientadas a validación semántica y explicabilidad de decisiones.
+
+### 1. Validación Semántica de Documento
+
+Se implementa extracción de texto desde el comprobante de domicilio (PDF) mediante procesamiento OCR.
+
+Posteriormente se realiza:
+
+- Normalización de texto (minúsculas, eliminación de acentos y caracteres especiales).
+- Comparación semántica básica entre:
+  - Nombre del solicitante
+  - Dirección ingresada en la solicitud
+  - Información extraída del documento
+
+Esto reduce falsos negativos por variaciones de formato y simula controles antifraude utilizados en sistemas financieros reales.
+
+---
+
+### 2. Motor de Reglas con Explicabilidad Automática
+
+El sistema genera una explicación legible del resultado de evaluación crediticia.
+
+Ejemplo:
+
+> “Application REJECTED. Score: 480. Reasons: Monthly income below minimum required (10000); Bank seniority below 12 months.”
+
+O en caso de aprobación:
+
+> “Application APPROVED. Score 720 meets minimum requirement (500). All business rules satisfied.”
+
+Esta funcionalidad cumple con el principio de:
+
+- Transparencia en decisiones
+- Trazabilidad
+- Preparación para cumplimiento regulatorio
+
+---
+
+### 3. Simulación de Score Crediticio
+
+El endpoint `GET /scorecredito` genera un valor aleatorio entre 300 y 900, simulando un proveedor externo de buró de crédito.
+
+Este diseño permite reemplazar fácilmente la simulación por:
+
+- Modelo de Machine Learning real
+- API externa de buró
+- Sistema de scoring versionado
+
+---
+
+## Enfoque de IA
+
+El proyecto aplica un enfoque de IA ligera y modular, permitiendo evolucionar hacia:
+
+- Modelos supervisados reales (Logistic Regression, XGBoost)
+- Validación avanzada con LLM
+- Comparación semántica avanzada de direcciones
+- Generación de explicaciones más naturales (Explainable AI)
+
+---
+
 ## Arquitectura General
 
 El sistema sigue una arquitectura en capas:
