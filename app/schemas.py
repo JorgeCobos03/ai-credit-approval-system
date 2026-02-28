@@ -10,7 +10,7 @@ class ApplicationCreate(BaseModel):
     monthly_income: float
     bank_seniority_months: int
     is_blacklisted: bool = False
-
+    address: Optional[str] = None
 
 class ApplicationResponse(BaseModel):
     id: int
@@ -21,6 +21,7 @@ class ApplicationResponse(BaseModel):
     monthly_income: float
     bank_seniority_months: int
     is_blacklisted: bool
-
+    address: Optional[str] = None
+    
     class Config:
         from_attributes = True
