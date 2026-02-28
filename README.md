@@ -100,7 +100,7 @@ Actualmente el sistema utiliza una tabla principal `applications`, que centraliz
 
 ### ERD
 
-![Architecture Diagram](./mermaid-diagram%20(2).png)
+![ERD Diagram](./mermaid-diagram%20(2).png)
 ---
 
 ## Flujo del Proceso
@@ -115,7 +115,7 @@ Actualmente el sistema utiliza una tabla principal `applications`, que centraliz
 
 ### Diagrama de Flujo
 
-![Architecture Diagram](./mermaid-diagram%20(3).png)
+![Process Flow Diagram](./mermaid-diagram%20(3).png)
 ---
 
 # Decisiones Técnicas
