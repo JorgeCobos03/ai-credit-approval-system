@@ -14,7 +14,6 @@ class Application(Base):
     curp = Column(String)
     gender = Column(String)
     monthly_income = Column(Float)
-    bank_seniority = Column(Integer)
     
     status = Column(String, default="PENDING")
     score = Column(Integer, nullable=True)
@@ -29,4 +28,4 @@ class Application(Base):
     bank_seniority_months = Column(Integer, nullable=False)
     is_blacklisted = Column(Boolean, default=False)
 
-    rejection_reason = Column(String, nullable=True)
+    rejection_reason = Column(Text, nullable=True)  
