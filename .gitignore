@@ -215,3 +215,5 @@ uploads/*
 
 # VSCode settings
 .vscode/
+
+storage/
