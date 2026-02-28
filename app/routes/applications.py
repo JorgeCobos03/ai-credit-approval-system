@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app import models, schemas
@@ -13,7 +13,9 @@ router = APIRouter(
     tags=["Applications"]
 )
 
-# Dependency DB
+# ---------------------------
+# DB Dependency
+# ---------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -22,15 +24,16 @@ def get_db():
         db.close()
 
 
+# ---------------------------
+# CREATE APPLICATION
+# ---------------------------
 @router.post("/", response_model=schemas.ApplicationResponse)
 def create_application(
     application: schemas.ApplicationCreate,
     db: Session = Depends(get_db)
 ):
-    # Generate credit score
     score = generate_credit_score()
 
-    # Evaluate business rules
     status, rejection_reason = evaluate_application(application, score)
 
     db_application = models.Application(
@@ -53,15 +56,24 @@ def create_application(
     return db_application
 
 
+# ---------------------------
+# GET APPLICATION
+# ---------------------------
 @router.get("/{application_id}", response_model=schemas.ApplicationResponse)
 def get_application(application_id: int, db: Session = Depends(get_db)):
     application = db.query(models.Application).filter(
         models.Application.id == application_id
     ).first()
 
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
     return application
 
 
+# ---------------------------
+# UPLOAD DOCUMENT
+# ---------------------------
 @router.post("/{application_id}/documents")
 def upload_document(
     application_id: int,
@@ -73,10 +85,9 @@ def upload_document(
     ).first()
 
     if not application:
-        return {"error": "Application not found"}
+        raise HTTPException(status_code=404, detail="Application not found")
 
     os.makedirs("storage/documents", exist_ok=True)
-
     file_path = f"storage/documents/{application_id}_{file.filename}"
 
     with open(file_path, "wb") as buffer:
@@ -89,11 +100,17 @@ def upload_document(
     application.document_verified = verified
     application.risk_flag = risk
 
+    if verified == "REJECTED":
+        application.status = "REJECTED"
+        application.rejection_reason = "Document validation failed"
+
     db.commit()
+    db.refresh(application)
 
     return {
         "message": "Document uploaded",
         "extracted_data": extracted_data,
         "document_verified": verified,
-        "risk_flag": risk
+        "risk_flag": risk,
+        "final_status": application.status
     }
