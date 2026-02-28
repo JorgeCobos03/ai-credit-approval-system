@@ -4,7 +4,6 @@ from typing import Optional
 
 class ApplicationCreate(BaseModel):
     name: str
-    address: str
     rfc: str
     curp: str
     gender: str
@@ -16,7 +15,6 @@ class ApplicationCreate(BaseModel):
 class ApplicationResponse(BaseModel):
     id: int
     name: str
-    address: str
     status: str
     score: Optional[int]
     rejection_reason: Optional[str]
