@@ -20,9 +20,11 @@ def normalize_text(text: str) -> str:
 
 def clean_multiline_text(text: str) -> str:
     """
-    Limpia espacios repetidos pero conserva estructura lógica.
+    Limpia espacios repetidos pero conserva líneas.
     """
-    return "\n".join([line.strip() for line in text.splitlines() if line.strip()])
+    return "\n".join(
+        [line.strip() for line in text.splitlines() if line.strip()]
+    )
 
 
 # =====================================================
@@ -44,7 +46,7 @@ def extract_document_data(file_path: str):
         print("Error leyendo PDF:", e)
 
     # -----------------------------------------
-    # Fallback OCR si no hay texto
+    # OCR fallback si no hay texto
     # -----------------------------------------
     if not text.strip():
         try:
@@ -66,53 +68,88 @@ def extract_document_data(file_path: str):
     valid_until = None
 
     # =====================================================
-    # FORMATO ESTRUCTURADO (Name:, Address:, etc.)
+    # EXTRACCIÓN ESTRUCTURADA (PRIORIDAD ALTA)
     # =====================================================
+
     for line in lines:
         lower_line = line.lower()
 
-        if "name:" in lower_line and not name:
+        # ---- Nombre
+        if lower_line.startswith("name:") and not name:
             name = line.split(":", 1)[1].strip()
 
-        elif ("address:" in lower_line or "direccion:" in lower_line) and not address:
+        # ---- Dirección
+        elif (
+            lower_line.startswith("address:")
+            or lower_line.startswith("direccion:")
+        ) and not address:
             address = line.split(":", 1)[1].strip()
 
-        elif ("valid until:" in lower_line or "vigencia:" in lower_line) and not valid_until:
+        # ---- Fecha válida (NO Issue Date)
+        elif (
+            lower_line.startswith("valid until:")
+            or lower_line.startswith("vigencia:")
+        ) and not valid_until:
             valid_until = line.split(":", 1)[1].strip()
 
     # =====================================================
-    # Fallback inteligente si no encontró campos
+    # FALLBACK INTELIGENTE
     # =====================================================
 
-    full_text = normalize_text(text)
+    noise_words = ["utility", "bill", "proof", "company", "address"]
 
-    # ---- Nombre fallback (dos palabras capitalizadas)
+    # ---- Nombre fallback (más restrictivo)
     if not name:
-        name_match = re.search(r"\b[A-Z][a-z]+\s[A-Z][a-z]+\b", text)
-        if name_match:
-            name = name_match.group().strip()
+        for line in lines:
+            normalized_line = normalize_text(line)
 
-    # ---- Dirección fallback (línea con número y calle)
+            # Excluir encabezados comunes
+            if any(word in normalized_line for word in noise_words):
+                continue
+
+            # No debe tener números
+            if re.search(r"\d", line):
+                continue
+
+            # Debe tener al menos 2 palabras
+            words = line.split()
+            if len(words) < 2:
+                continue
+
+            # Patrón típico de nombre propio
+            if re.match(r"^[A-Z][a-z]+\s[A-Z][a-z]+$", line.strip()):
+                name = line.strip()
+                break
+
+    # ---- Dirección fallback
     if not address:
         for line in lines:
             if re.search(r"\d+", line) and any(
-                word in normalize_text(line)
-                for word in ["calle", "av", "avenida", "col", "cp"]
+                keyword in normalize_text(line)
+                for keyword in ["calle", "av", "avenida", "col", "cp"]
             ):
                 address = line.strip()
                 break
 
-    # ---- Fecha fallback (ISO)
+    # ---- Fecha fallback ISO (pero ignorando Issue Date)
     if not valid_until:
-        iso_match = re.search(r"\d{4}-\d{2}-\d{2}", text)
-        if iso_match:
-            valid_until = iso_match.group()
+        valid_match = re.search(
+            r"(valid until|vigencia)[^\d]*(\d{4}-\d{2}-\d{2})",
+            text,
+            re.IGNORECASE,
+        )
+        if valid_match:
+            valid_until = valid_match.group(2)
 
-    # ---- Fecha fallback mexicana
+    # ---- Fecha fallback alternativa mexicana
     if not valid_until:
-        mx_match = re.search(r"\d{2}/\d{2}/\d{4}", text)
+        mx_match = re.search(
+            r"(valid until|vigencia)[^\d]*(\d{2}/\d{2}/\d{4})",
+            text,
+            re.IGNORECASE,
+        )
         if mx_match:
-            valid_until = mx_match.group()
+            valid_until = mx_match.group(2)
 
     return {
         "name": name,
@@ -136,7 +173,7 @@ def validate_document(application, extracted_data):
     normalized_doc_name = normalize_text(extracted_name)
     normalized_app_name = normalize_text(application.name)
 
-    # Permitir coincidencia parcial
+    # Coincidencia exacta o contenida
     if normalized_app_name not in normalized_doc_name:
         return "REJECTED", "HIGH"
 
