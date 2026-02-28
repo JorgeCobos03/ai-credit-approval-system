@@ -102,7 +102,7 @@ def upload_document(
 
     if verified == "REJECTED":
         application.status = "REJECTED"
-        application.rejection_reason = "Document validation failed"
+        application.rejection_reason = "Document validation failed - Name mismatch or unreadable document"
 
     db.commit()
     db.refresh(application)
