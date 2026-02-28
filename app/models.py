@@ -13,6 +13,8 @@ class Application(Base):
     rfc = Column(String, nullable=False)
     curp = Column(String, nullable=False)
     gender = Column(String, nullable=False)
+    address = Column(String, nullable=True)
+
 
     # Financial data
     monthly_income = Column(Float, nullable=False)
