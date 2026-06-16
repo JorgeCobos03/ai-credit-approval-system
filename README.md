@@ -212,16 +212,14 @@ Incluir:
 
 ---
 
-## Entorno Desplegado (Producción Demo)
+## Despliegue en Producción
 
-El sistema se encuentra desplegado en un entorno cloud utilizando **Render**.
+El sistema se encuentra desplegado en un entorno cloud utilizando Render.
 
-Puedes acceder a la aplicación y a la documentación interactiva mediante:
-
-🔗 Aplicación Web:
+- Aplicación Web:
 https://ai-credit-approval-system.onrender.com
 
-🔗 Swagger UI:
+- Swagger UI:
 https://ai-credit-approval-system.onrender.com/docs
 
 Desde esta interfaz es posible:
