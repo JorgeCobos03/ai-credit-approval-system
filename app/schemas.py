@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from datetime import datetime
 
 
 class ApplicationCreate(BaseModel):
@@ -22,6 +23,9 @@ class ApplicationResponse(BaseModel):
     bank_seniority_months: int
     is_blacklisted: bool
     address: Optional[str] = None
+    document_verified: Optional[str] = None
+    risk_flag: Optional[str] = None
+    created_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True

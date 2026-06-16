@@ -79,8 +79,14 @@ def extract_document_data(file_path: str):
     lines = text.split("\n")
 
     name = None
+    rfc = None
+    curp = None
+    gender = None
     address = None
     valid_until = None
+    monthly_income = None
+    bank_seniority_months = None
+    is_blacklisted = False
 
     # =====================================================
     # EXTRACCIÓN ESTRUCTURADA (PRIORIDAD ALTA)
@@ -91,6 +97,21 @@ def extract_document_data(file_path: str):
 
         if lower_line.startswith("name:") and not name:
             name = line.split(":", 1)[1].strip()
+
+        elif lower_line.startswith("nombre:") and not name:
+            name = line.split(":", 1)[1].strip()
+
+        elif lower_line.startswith("rfc:") and not rfc:
+            rfc = line.split(":", 1)[1].strip()
+
+        elif lower_line.startswith("curp:") and not curp:
+            curp = line.split(":", 1)[1].strip()
+
+        elif (
+            lower_line.startswith("gender:")
+            or lower_line.startswith("genero:")
+        ) and not gender:
+            gender = line.split(":", 1)[1].strip()
 
         elif (
             lower_line.startswith("address:")
@@ -104,9 +125,82 @@ def extract_document_data(file_path: str):
         ) and not valid_until:
             valid_until = line.split(":", 1)[1].strip()
 
+        elif (
+            lower_line.startswith("monthly income:")
+            or lower_line.startswith("ingreso mensual:")
+        ) and monthly_income is None:
+            monthly_income = parse_money(line.split(":", 1)[1])
+
+        elif (
+            lower_line.startswith("bank seniority:")
+            or lower_line.startswith("antiguedad bancaria:")
+            or lower_line.startswith("antigüedad bancaria:")
+        ) and bank_seniority_months is None:
+            bank_seniority_months = parse_integer(line.split(":", 1)[1])
+
+        elif (
+            lower_line.startswith("blacklisted:")
+            or lower_line.startswith("lista negra:")
+        ):
+            is_blacklisted = parse_bool(line.split(":", 1)[1])
+
     # =====================================================
     # FALLBACK INTELIGENTE (tu lógica original intacta)
     # =====================================================
+
+    if not name:
+        name_match = re.search(
+            r"(?:name|nombre(?: del solicitante)?)\s*:\s*([^\n]+)",
+            text,
+            re.IGNORECASE,
+        )
+        if name_match:
+            name = name_match.group(1).strip()
+
+    if not curp:
+        curp_match = re.search(
+            r"\b[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d\b",
+            text,
+            re.IGNORECASE,
+        )
+        if curp_match:
+            curp = curp_match.group(0).upper()
+
+    if not rfc:
+        rfc_match = re.search(
+            r"\b[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}\b",
+            text,
+            re.IGNORECASE,
+        )
+        if rfc_match:
+            rfc = rfc_match.group(0).upper()
+
+    if not gender:
+        gender_match = re.search(
+            r"(?:gender|genero|sexo)\s*:\s*([FMX])\b",
+            text,
+            re.IGNORECASE,
+        )
+        if gender_match:
+            gender = gender_match.group(1).upper()
+
+    if monthly_income is None:
+        income_match = re.search(
+            r"(?:monthly income|ingreso mensual)[^\d\n]*(\$?\s*[\d,]+(?:\.\d+)?)",
+            text,
+            re.IGNORECASE,
+        )
+        if income_match:
+            monthly_income = parse_money(income_match.group(1))
+
+    if bank_seniority_months is None:
+        seniority_match = re.search(
+            r"(?:bank seniority|antig[uü]edad bancaria)[^\d\n]*(\d+)",
+            text,
+            re.IGNORECASE,
+        )
+        if seniority_match:
+            bank_seniority_months = parse_integer(seniority_match.group(1))
 
     noise_words = ["utility", "bill", "proof", "company", "address"]
 
@@ -157,10 +251,29 @@ def extract_document_data(file_path: str):
 
     return {
         "name": name,
+        "rfc": rfc,
+        "curp": curp,
+        "gender": gender,
         "address": address,
         "valid_until": valid_until,
-        "is_blacklisted": False
+        "monthly_income": monthly_income,
+        "bank_seniority_months": bank_seniority_months,
+        "is_blacklisted": is_blacklisted
     }
+
+
+def parse_money(value: str):
+    amount = re.sub(r"[^\d.]", "", value or "")
+    return float(amount) if amount else None
+
+
+def parse_integer(value: str):
+    amount = re.sub(r"[^\d]", "", value or "")
+    return int(amount) if amount else None
+
+
+def parse_bool(value: str) -> bool:
+    return normalize_text(value) in {"true", "yes", "si", "1", "blacklisted"}
 
 
 # =====================================================

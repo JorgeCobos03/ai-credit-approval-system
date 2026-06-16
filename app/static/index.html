@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Credit Approval</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-card" aria-hidden="true">
+            <i></i>
+            <b>AI</b>
+          </span>
+          <div>
+            <strong>CreditOS</strong>
+            <span>Risk desk</span>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <a class="active" href="#dashboard">
+            <span class="nav-icon dashboard-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8"/></svg>
+            </span>
+            Dashboard
+          </a>
+          <a href="#documento">
+            <span class="nav-icon document-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
+            </span>
+            Documento
+          </a>
+          <a href="#solicitudes">
+            <span class="nav-icon bell-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+            </span>
+            Solicitudes
+          </a>
+          <a href="#nuevo">
+            <span class="nav-icon plus-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 7v10M7 12h10"/></svg>
+            </span>
+            Nuevo caso
+          </a>
+          <a href="/docs">
+            <span class="nav-icon docs-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M8 9 5 12l3 3M16 9l3 3-3 3M14 5l-4 14"/></svg>
+            </span>
+            API docs
+          </a>
+        </nav>
+
+        <div class="sidebar-card">
+          <span class="pulse-dot"></span>
+          <p>Motor activo</p>
+          <strong id="systemScore">--</strong>
+          <small>Score simulado</small>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Decision center</p>
+            <h1>Panel de aprobacion crediticia</h1>
+          </div>
+          <button class="icon-button" id="refreshBtn" type="button" aria-label="Actualizar datos" title="Actualizar datos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg>
+          </button>
+        </header>
+
+        <section id="dashboard" class="hero-grid">
+          <article class="decision-panel">
+            <div>
+              <p class="eyebrow">Estado operativo</p>
+              <h2>Evaluacion en tiempo real</h2>
+            </div>
+            <div class="approval-ring" style="--value: 0">
+              <div>
+                <strong id="approvalValue">0%</strong>
+                <span>Aprobadas</span>
+              </div>
+            </div>
+            <div class="decision-stats">
+              <span><b id="approvedValue">0%</b>Aprobacion</span>
+              <span><b id="rejectedValue">0%</b>Rechazo</span>
+              <span><b id="todayValue">0</b>Hoy</span>
+            </div>
+          </article>
+
+          <article class="metric-card accent-green">
+            <div class="metric-head">
+              <span>Total</span>
+              <strong id="totalApplications">0</strong>
+            </div>
+            <div class="stacked-chart" aria-label="Distribucion total por estado">
+              <i id="totalApprovedSegment" class="approved"></i>
+              <i id="totalRejectedSegment" class="rejected"></i>
+              <i id="totalPendingSegment" class="pending"></i>
+            </div>
+            <div class="metric-legend">
+              <span><b class="dot approved"></b>Aprobadas</span>
+              <span><b class="dot rejected"></b>Rechazadas</span>
+              <span><b class="dot pending"></b>Pendientes</span>
+            </div>
+          </article>
+          <article class="metric-card accent-blue">
+            <div class="metric-head">
+              <span>Riesgo</span>
+              <strong id="riskIndex">--</strong>
+            </div>
+            <div class="risk-dots" id="riskDots" aria-label="Indice visual de riesgo"></div>
+            <small id="riskCaption">Indice ponderado</small>
+          </article>
+          <article class="metric-card reason-card accent-rose">
+            <span>Motivo clave</span>
+            <div class="reason-box">
+              <strong id="topReason">Sin datos</strong>
+              <p id="topReasonDetail">Aun no hay una decision dominante.</p>
+              <code id="topReasonCodes">CODIGO: SIN_DATOS</code>
+            </div>
+            <small>Principal factor de rechazo</small>
+          </article>
+        </section>
+
+        <section class="chart-grid">
+          <article class="panel chart-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Distribucion</p>
+                <h2>Pipeline de decisiones</h2>
+              </div>
+            </div>
+            <div class="bars">
+              <div class="bar-row">
+                <span>Approved</span>
+                <div><i id="approvedBar"></i></div>
+                <b id="approvedCount">0</b>
+              </div>
+              <div class="bar-row">
+                <span>Rejected</span>
+                <div><i id="rejectedBar"></i></div>
+                <b id="rejectedCount">0</b>
+              </div>
+              <div class="bar-row">
+                <span>Pending docs</span>
+                <div><i id="pendingBar"></i></div>
+                <b id="pendingCount">0</b>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="workflow-grid">
+          <article id="documento" class="panel document-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Documento inteligente</p>
+                <h2>Extraccion y evaluacion automatica</h2>
+              </div>
+              <span class="status-pill" id="documentStatus">Listo</span>
+            </div>
+
+            <form id="documentForm" class="document-form">
+              <label class="file-drop wide">
+                <input name="file" type="file" accept="application/pdf" required />
+                <span>
+                  <b id="fileName">Seleccionar PDF</b>
+                  <small>Comprobante o expediente crediticio</small>
+                </span>
+              </label>
+
+              <label>
+                RFC
+                <input name="rfc" placeholder="TOMA900101AB1" />
+              </label>
+              <label>
+                CURP
+                <input name="curp" placeholder="TOMA900101MDFRRL08" />
+              </label>
+              <label>
+                Genero
+                <select name="gender">
+                  <option value="">Detectar</option>
+                  <option value="F">F</option>
+                  <option value="M">M</option>
+                  <option value="X">X</option>
+                </select>
+              </label>
+              <label>
+                Ingreso mensual
+                <input name="monthly_income" type="number" min="0" step="100" placeholder="18000" />
+              </label>
+              <label>
+                Antiguedad bancaria
+                <input name="bank_seniority_months" type="number" min="0" placeholder="24" />
+              </label>
+              <label class="check">
+                <input name="is_blacklisted" type="checkbox" />
+                <span>Lista negra</span>
+              </label>
+              <button class="primary-button wide" type="submit">Procesar documento</button>
+            </form>
+
+            <div class="document-result">
+              <div class="result-score">
+                <span id="documentDecision">--</span>
+                <strong id="documentScore">Score --</strong>
+              </div>
+              <dl>
+                <div>
+                  <dt>Nombre</dt>
+                  <dd id="extractedName">--</dd>
+                </div>
+                <div>
+                  <dt>Direccion</dt>
+                  <dd id="extractedAddress">--</dd>
+                </div>
+                <div>
+                  <dt>Documento</dt>
+                  <dd id="documentVerified">--</dd>
+                </div>
+                <div>
+                  <dt>Riesgo</dt>
+                  <dd id="documentRisk">--</dd>
+                </div>
+              </dl>
+              <p id="documentExplanation" class="result-explanation">Sin evaluacion reciente.</p>
+            </div>
+
+          </article>
+
+          <article id="nuevo" class="panel form-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Alta rapida</p>
+                <h2>Nueva solicitud</h2>
+              </div>
+              <span class="status-pill" id="formStatus">Listo</span>
+            </div>
+            <form id="applicationForm">
+              <label>
+                Nombre
+                <input name="name" placeholder="Maria Torres" required />
+              </label>
+              <label>
+                RFC
+                <input name="rfc" placeholder="TOMA900101AB1" required />
+              </label>
+              <label>
+                CURP
+                <input name="curp" placeholder="TOMA900101MDFRRL08" required />
+              </label>
+              <label>
+                Genero
+                <select name="gender" required>
+                  <option value="F">F</option>
+                  <option value="M">M</option>
+                  <option value="X">X</option>
+                </select>
+              </label>
+              <label>
+                Ingreso mensual
+                <input name="monthly_income" type="number" min="0" step="100" value="18000" required />
+              </label>
+              <label>
+                Antiguedad bancaria
+                <input name="bank_seniority_months" type="number" min="0" value="24" required />
+              </label>
+              <label class="wide">
+                Direccion
+                <input name="address" placeholder="Av. Reforma 100, CDMX" />
+              </label>
+              <label class="check">
+                <input name="is_blacklisted" type="checkbox" />
+                <span>Lista negra</span>
+              </label>
+              <button class="primary-button wide" type="submit">Crear solicitud</button>
+            </form>
+          </article>
+        </section>
+
+        <section id="solicitudes" class="panel table-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Actividad</p>
+              <h2>Solicitudes recientes</h2>
+            </div>
+            <span class="status-pill" id="lastUpdate">--</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Estado</th>
+                  <th>Score</th>
+                  <th>Ingreso</th>
+                  <th>Riesgo</th>
+                  <th>Motivo</th>
+                </tr>
+              </thead>
+              <tbody id="applicationsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
