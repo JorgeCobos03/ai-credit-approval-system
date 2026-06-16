@@ -216,9 +216,13 @@ Incluir:
 
 El sistema se encuentra desplegado en un entorno cloud utilizando **Render**.
 
-Puedes acceder a la documentación interactiva (Swagger UI) en:
+Puedes acceder a la aplicación y a la documentación interactiva mediante:
 
-🔗 https://ai-credit-approval-system.onrender.com/docs#/Applications/upload_document_applications__application_id__documents_post
+🔗 Aplicación Web:
+https://ai-credit-approval-system.onrender.com
+
+🔗 Swagger UI:
+https://ai-credit-approval-system.onrender.com/docs
 
 Desde esta interfaz es posible:
 
