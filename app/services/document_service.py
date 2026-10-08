@@ -1,317 +1,94 @@
-import fitz
+"""Bounded PDF extraction. Text matching is evidence for review, not identity proof."""
+import io
 import re
 import unicodedata
-from datetime import datetime
-from pdf2image import convert_from_path
-import pytesseract
+from datetime import date, datetime
+import fitz
+from fastapi import HTTPException
 
+MAX_BYTES = 8 * 1024 * 1024
+MAX_PAGES = 12
 
-# =====================================================
-# UTILIDADES
-# =====================================================
+def normalize_text(text):
+    text = unicodedata.normalize("NFKD", text or "").encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
 
-def normalize_text(text: str) -> str:
-    """
-    Elimina acentos, convierte a minúsculas y limpia espacios.
-    """
-    text = unicodedata.normalize("NFD", text)
-    text = text.encode("ascii", "ignore").decode("utf-8")
-    return re.sub(r"\s+", " ", text).strip().lower()
+def semantic_similarity(a, b):
+    a, b = set(normalize_text(a).split()), set(normalize_text(b).split())
+    return len(a & b) / max(len(a), len(b)) if a and b else 0
 
-
-def clean_multiline_text(text: str) -> str:
-    """
-    Limpia espacios repetidos pero conserva líneas.
-    """
-    return "\n".join(
-        [line.strip() for line in text.splitlines() if line.strip()]
-    )
-
-
-def semantic_similarity(a: str, b: str) -> float:
-    """
-    Similaridad simple basada en intersección de palabras.
-    """
-    set_a = set(normalize_text(a).split())
-    set_b = set(normalize_text(b).split())
-
-    if not set_a or not set_b:
-        return 0.0
-
-    intersection = set_a.intersection(set_b)
-    return len(intersection) / max(len(set_a), len(set_b))
-
-
-# =====================================================
-# EXTRAER INFORMACIÓN DEL DOCUMENTO
-# =====================================================
-
-def extract_document_data(file_path: str):
-
-    text = ""
-
-    # -----------------------------------------
-    # Intentar lectura directa PDF
-    # -----------------------------------------
+def extract_document_data(source):
+    raw = source if isinstance(source, bytes) else open(source, "rb").read(MAX_BYTES + 1)
+    if len(raw) > MAX_BYTES:
+        raise HTTPException(413, "El PDF supera el límite de 8 MB.")
+    if not raw.startswith(b"%PDF-"):
+        raise HTTPException(422, "El archivo debe ser un PDF válido.")
+    parts, warnings = [], []
     try:
-        doc = fitz.open(file_path)
-        for page in doc:
-            text += page.get_text()
-    except Exception as e:
-        print("Error leyendo PDF:", e)
-
-    # -----------------------------------------
-    # OCR fallback si no hay texto
-    # -----------------------------------------
-    if not text.strip():
-        try:
-            pages = convert_from_path(file_path)
-            for page in pages:
-                text += pytesseract.image_to_string(page)
-        except Exception as e:
-            print("Error usando OCR:", e)
-
-    print("======= TEXTO EXTRAIDO =======")
-    print(text)
-    print("======= FIN TEXTO =======")
-
-    text = clean_multiline_text(text)
-    lines = text.split("\n")
-
-    name = None
-    rfc = None
-    curp = None
-    gender = None
-    address = None
-    valid_until = None
-    monthly_income = None
-    bank_seniority_months = None
-    is_blacklisted = False
-
-    # =====================================================
-    # EXTRACCIÓN ESTRUCTURADA (PRIORIDAD ALTA)
-    # =====================================================
-
-    for line in lines:
-        lower_line = line.lower()
-
-        if lower_line.startswith("name:") and not name:
-            name = line.split(":", 1)[1].strip()
-
-        elif lower_line.startswith("nombre:") and not name:
-            name = line.split(":", 1)[1].strip()
-
-        elif lower_line.startswith("rfc:") and not rfc:
-            rfc = line.split(":", 1)[1].strip()
-
-        elif lower_line.startswith("curp:") and not curp:
-            curp = line.split(":", 1)[1].strip()
-
-        elif (
-            lower_line.startswith("gender:")
-            or lower_line.startswith("genero:")
-        ) and not gender:
-            gender = line.split(":", 1)[1].strip()
-
-        elif (
-            lower_line.startswith("address:")
-            or lower_line.startswith("direccion:")
-        ) and not address:
-            address = line.split(":", 1)[1].strip()
-
-        elif (
-            lower_line.startswith("valid until:")
-            or lower_line.startswith("vigencia:")
-        ) and not valid_until:
-            valid_until = line.split(":", 1)[1].strip()
-
-        elif (
-            lower_line.startswith("monthly income:")
-            or lower_line.startswith("ingreso mensual:")
-        ) and monthly_income is None:
-            monthly_income = parse_money(line.split(":", 1)[1])
-
-        elif (
-            lower_line.startswith("bank seniority:")
-            or lower_line.startswith("antiguedad bancaria:")
-            or lower_line.startswith("antigüedad bancaria:")
-        ) and bank_seniority_months is None:
-            bank_seniority_months = parse_integer(line.split(":", 1)[1])
-
-        elif (
-            lower_line.startswith("blacklisted:")
-            or lower_line.startswith("lista negra:")
-        ):
-            is_blacklisted = parse_bool(line.split(":", 1)[1])
-
-    # =====================================================
-    # FALLBACK INTELIGENTE (tu lógica original intacta)
-    # =====================================================
-
-    if not name:
-        name_match = re.search(
-            r"(?:name|nombre(?: del solicitante)?)\s*:\s*([^\n]+)",
-            text,
-            re.IGNORECASE,
-        )
-        if name_match:
-            name = name_match.group(1).strip()
-
-    if not curp:
-        curp_match = re.search(
-            r"\b[A-Z]{4}\d{6}[HM][A-Z]{5}[A-Z0-9]\d\b",
-            text,
-            re.IGNORECASE,
-        )
-        if curp_match:
-            curp = curp_match.group(0).upper()
-
-    if not rfc:
-        rfc_match = re.search(
-            r"\b[A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}\b",
-            text,
-            re.IGNORECASE,
-        )
-        if rfc_match:
-            rfc = rfc_match.group(0).upper()
-
-    if not gender:
-        gender_match = re.search(
-            r"(?:gender|genero|sexo)\s*:\s*([FMX])\b",
-            text,
-            re.IGNORECASE,
-        )
-        if gender_match:
-            gender = gender_match.group(1).upper()
-
-    if monthly_income is None:
-        income_match = re.search(
-            r"(?:monthly income|ingreso mensual)[^\d\n]*(\$?\s*[\d,]+(?:\.\d+)?)",
-            text,
-            re.IGNORECASE,
-        )
-        if income_match:
-            monthly_income = parse_money(income_match.group(1))
-
-    if bank_seniority_months is None:
-        seniority_match = re.search(
-            r"(?:bank seniority|antig[uü]edad bancaria)[^\d\n]*(\d+)",
-            text,
-            re.IGNORECASE,
-        )
-        if seniority_match:
-            bank_seniority_months = parse_integer(seniority_match.group(1))
-
-    noise_words = ["utility", "bill", "proof", "company", "address"]
-
-    if not name:
-        for line in lines:
-            normalized_line = normalize_text(line)
-
-            if any(word in normalized_line for word in noise_words):
-                continue
-
-            if re.search(r"\d", line):
-                continue
-
-            words = line.split()
-            if len(words) < 2:
-                continue
-
-            if re.match(r"^[A-Z][a-z]+\s[A-Z][a-z]+$", line.strip()):
-                name = line.strip()
-                break
-
-    if not address:
-        for line in lines:
-            if re.search(r"\d+", line) and any(
-                keyword in normalize_text(line)
-                for keyword in ["calle", "av", "avenida", "col", "cp"]
-            ):
-                address = line.strip()
-                break
-
-    if not valid_until:
-        valid_match = re.search(
-            r"(valid until|vigencia)[^\d]*(\d{4}-\d{2}-\d{2})",
-            text,
-            re.IGNORECASE,
-        )
-        if valid_match:
-            valid_until = valid_match.group(2)
-
-    if not valid_until:
-        mx_match = re.search(
-            r"(valid until|vigencia)[^\d]*(\d{2}/\d{2}/\d{4})",
-            text,
-            re.IGNORECASE,
-        )
-        if mx_match:
-            valid_until = mx_match.group(2)
-
-    return {
-        "name": name,
-        "rfc": rfc,
-        "curp": curp,
-        "gender": gender,
-        "address": address,
-        "valid_until": valid_until,
-        "monthly_income": monthly_income,
-        "bank_seniority_months": bank_seniority_months,
-        "is_blacklisted": is_blacklisted
+        with fitz.open(stream=raw, filetype="pdf") as doc:
+            if doc.needs_pass or not 0 < len(doc) <= MAX_PAGES:
+                raise HTTPException(422, "Usa un PDF sin contraseña, de 1 a 12 páginas.")
+            for page in doc:
+                text = page.get_text()[:20000]
+                if len(text.strip()) < 20:
+                    try:
+                        import pytesseract
+                        from PIL import Image
+                        if page.rect.width * page.rect.height * 2.25 > 20_000_000:
+                            raise ValueError("Oversized page")
+                        pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5))
+                        text = pytesseract.image_to_string(Image.open(io.BytesIO(pix.tobytes("png"))), timeout=8)[:20000]
+                    except Exception:
+                        warnings.append("OCR no disponible o página ilegible. Adjunta un PDF con texto o revisa manualmente.")
+                parts.append(text)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(422, "No fue posible leer el PDF.") from None
+    text = "\n".join(parts)
+    labels = {
+        "name": r"(?:nombre(?: del solicitante)?|name)",
+        "address": r"(?:direcci[oó]n|domicilio|address)",
+        "rfc": r"rfc", "curp": r"curp",
+        "monthly_income": r"(?:ingreso mensual|monthly income)",
+        "bank_seniority_months": r"(?:antig[uü]edad bancaria|bank seniority)",
+        "valid_until": r"(?:vigencia|valid until)",
     }
+    data = {}
+    for field, label in labels.items():
+        match = re.search(r"^\s*" + label + r"\s*:\s*([^\r\n]+)", text, re.I | re.M)
+        data[field] = match.group(1).strip()[:400] if match else None
+    for field in ("monthly_income", "bank_seniority_months"):
+        value = data[field]
+        if value:
+            match = re.search(r"\d[\d,]*(?:\.\d+)?", value)
+            data[field] = float(match.group().replace(",", "")) if match else None
+            if field == "bank_seniority_months" and data[field] is not None:
+                data[field] = int(data[field])
+    data["warnings"] = list(dict.fromkeys(warnings))
+    data["method"] = "pdf_text_or_local_ocr"
+    data["requires_confirmation"] = True
+    return data
 
-
-def parse_money(value: str):
-    amount = re.sub(r"[^\d.]", "", value or "")
-    return float(amount) if amount else None
-
-
-def parse_integer(value: str):
-    amount = re.sub(r"[^\d]", "", value or "")
-    return int(amount) if amount else None
-
-
-def parse_bool(value: str) -> bool:
-    return normalize_text(value) in {"true", "yes", "si", "1", "blacklisted"}
-
-
-# =====================================================
-# VALIDAR DOCUMENTO CONTRA SOLICITUD
-# =====================================================
-
-def validate_document(application, extracted_data):
-
+def validate_document(application, data):
     reasons = []
-
-    extracted_name = extracted_data.get("name")
-    extracted_address = extracted_data.get("address")
-    extracted_valid_until = extracted_data.get("valid_until")
-
-    # Validación nombre
-    if not extracted_name:
-        reasons.append("Document name not found")
-    elif normalize_text(application.name) not in normalize_text(extracted_name):
-        reasons.append("Document name does not match application name")
-
-    # Validación semántica dirección
-    if hasattr(application, "address") and application.address and extracted_address:
-        similarity = semantic_similarity(application.address, extracted_address)
-        if similarity < 0.6:
-            reasons.append("Address does not match semantically")
-    else:
-        reasons.append("Address missing in document")
-
-    # Documento vencido
-    if extracted_valid_until:
-        try:
-            valid_date = datetime.strptime(extracted_valid_until, "%Y-%m-%d")
-            if valid_date < datetime.now():
-                reasons.append("Document expired")
-        except Exception:
-            pass
-
-    if reasons:
-        return "REJECTED", "HIGH", reasons
-
-    return "APPROVED", "LOW", []
+    if not data.get("name") or semantic_similarity(application.name, data["name"]) < .8:
+        reasons.append("Nombre ausente o con diferencias: confirmar identidad.")
+    if not data.get("address") or semantic_similarity(application.address, data["address"]) < .7:
+        reasons.append("Domicilio ausente o con diferencias: revisar comprobante.")
+    if data.get("rfc") and normalize_text(data["rfc"]) != normalize_text(application.rfc):
+        reasons.append("RFC distinto al expediente.")
+    if data.get("valid_until"):
+        parsed = None
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+            try:
+                parsed = datetime.strptime(data["valid_until"], fmt).date()
+                break
+            except ValueError:
+                continue
+        if not parsed:
+            reasons.append("Vigencia ilegible.")
+        elif parsed < date.today():
+            reasons.append("Documento vencido.")
+    reasons.extend(data.get("warnings", []))
+    return ("REVIEW", "HIGH", reasons) if reasons else ("MATCHED", "LOW", [])

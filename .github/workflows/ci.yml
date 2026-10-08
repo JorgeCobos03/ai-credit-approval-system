@@ -1,0 +1,46 @@
+name: CreditOS checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        database: [sqlite, postgres]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: creditos
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: creditos_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: pip install -r requirements-dev.txt
+      - name: Validate frontend syntax
+        run: node --check app/static/app.js
+      - name: Test SQLite
+        if: matrix.database == 'sqlite'
+        run: python -m unittest discover -v
+      - name: Test PostgreSQL
+        if: matrix.database == 'postgres'
+        env:
+          TEST_DATABASE_URL: postgresql+psycopg://creditos:test-only-password@localhost:5432/creditos_test
+        run: python -m unittest discover -v

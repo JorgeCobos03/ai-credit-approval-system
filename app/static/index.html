@@ -3,312 +3,580 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Credit Approval</title>
+    <meta name="theme-color" content="#f6f7f9" />
+    <title>CreditOS — Operaciones de crédito</title>
+    <link rel="icon" href="/static/mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <span class="brand-card" aria-hidden="true">
-            <i></i>
-            <b>AI</b>
-          </span>
-          <div>
-            <strong>CreditOS</strong>
-            <span>Risk desk</span>
-          </div>
+    <a class="skip" href="#main">Saltar al contenido</a>
+    <aside class="sidebar">
+      <a class="brand" href="#overview"
+        ><span class="brandmark">c<span>•</span></span
+        >credit<span>os</span></a
+      >
+      <div class="workspace-label">
+        <span class="workspace-icon">W</span>
+        <div>
+          Espacio de trabajo<small id="workspaceMode"
+            >Vista de demostración</small
+          >
         </div>
-
-        <nav class="nav">
-          <a class="active" href="#dashboard">
-            <span class="nav-icon dashboard-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8"/></svg>
-            </span>
-            Dashboard
-          </a>
-          <a href="#documento">
-            <span class="nav-icon document-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>
-            </span>
-            Documento
-          </a>
-          <a href="#solicitudes">
-            <span class="nav-icon bell-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
-            </span>
-            Solicitudes
-          </a>
-          <a href="#nuevo">
-            <span class="nav-icon plus-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 7v10M7 12h10"/></svg>
-            </span>
-            Nuevo caso
-          </a>
-          <a href="/docs">
-            <span class="nav-icon docs-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M8 9 5 12l3 3M16 9l3 3-3 3M14 5l-4 14"/></svg>
-            </span>
-            API docs
-          </a>
-        </nav>
-
-        <div class="sidebar-card">
-          <span class="pulse-dot"></span>
-          <p>Motor activo</p>
-          <strong id="systemScore">--</strong>
-          <small>Score simulado</small>
-        </div>
-      </aside>
-
-      <main class="workspace">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Decision center</p>
-            <h1>Panel de aprobacion crediticia</h1>
-          </div>
-          <button class="icon-button" id="refreshBtn" type="button" aria-label="Actualizar datos" title="Actualizar datos">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg>
+        <span class="tiny">⌄</span>
+      </div>
+      <p class="nav-label">WORKSPACE</p>
+      <nav aria-label="Navegación principal">
+        <a href="#overview" data-page="overview" class="active"
+          ><span data-icon="grid"></span>Resumen</a
+        >
+        <a href="#applications" data-page="applications"
+          ><span data-icon="folder"></span>Solicitudes<span
+            class="nav-count"
+            id="navCount"
+            >0</span
+          ></a
+        >
+        <a href="#simulator" data-page="simulator"
+          ><span data-icon="sliders"></span>Simulador</a
+        >
+        <a href="#guide" data-page="guide"
+          ><span data-icon="book"></span>Centro de ayuda</a
+        >
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="ai-note">
+          <span class="spark">✧</span
+          ><strong>Menos tareas. Más criterio.</strong>
+          <p>Tu copiloto prepara el análisis.<br />Tú tomas la decisión.</p>
+          <button class="text-button" id="exploreAI">
+            Explorar el copiloto <span>↗</span>
           </button>
-        </header>
-
-        <section id="dashboard" class="hero-grid">
-          <article class="decision-panel">
+        </div>
+        <button class="profile" id="accountButton">
+          <span class="avatar">D</span
+          ><span
+            ><strong id="accountName">Modo demostración</strong
+            ><small id="accountCaption">Conectar mi espacio</small></span
+          ><span>↗</span>
+        </button>
+      </div>
+    </aside>
+    <div class="app">
+      <header class="topbar">
+        <div class="breadcrumb">
+          Workspace <span>/</span> <strong id="pageTitle">Resumen</strong>
+        </div>
+        <div class="top-actions">
+          <span class="live"><i></i>Sistema disponible</span
+          ><button
+            class="icon-button"
+            id="refresh"
+            aria-label="Actualizar datos"
+            title="Actualizar"
+          >
+            <span data-icon="refresh"></span></button
+          ><button class="button compact" id="loginButton">
+            Iniciar sesión <span>↗</span>
+          </button>
+        </div>
+      </header>
+      <main id="main">
+        <div id="demoBanner" class="demo-banner">
+          <span
+            ><b>DEMO</b> Explora con datos ficticios. Los expedientes reales
+            requieren iniciar sesión.</span
+          ><button class="text-button" id="bannerLogin">
+            Conectar espacio →
+          </button>
+        </div>
+        <section id="overview" class="page">
+          <div class="page-heading">
             <div>
-              <p class="eyebrow">Estado operativo</p>
-              <h2>Evaluacion en tiempo real</h2>
+              <p class="eyebrow">TU OPERACIÓN, EN PERSPECTIVA</p>
+              <h1>Claridad para decidir.</h1>
+              <p class="subtitle">
+                Cada solicitud, cada señal y el siguiente paso. En un solo
+                lugar.
+              </p>
             </div>
-            <div class="approval-ring" style="--value: 0">
-              <div>
-                <strong id="approvalValue">0%</strong>
-                <span>Aprobadas</span>
+            <button class="button primary new-case">
+              <span data-icon="plus"></span>Nueva solicitud
+            </button>
+          </div>
+          <div class="metrics">
+            <article class="metric">
+              <div class="metric-label">
+                Solicitudes totales<span data-icon="folder"></span>
               </div>
+              <strong id="totalMetric">—</strong
+              ><span class="metric-foot" id="todayMetric"
+                >Cargando actividad</span
+              >
+            </article>
+            <article class="metric">
+              <div class="metric-label">
+                Por revisar<span class="indicator amber"></span>
+              </div>
+              <strong id="reviewMetric">—</strong
+              ><span class="metric-foot">Pendientes de decisión humana</span>
+            </article>
+            <article class="metric">
+              <div class="metric-label">
+                Tasa de aprobación<span data-icon="check"></span>
+              </div>
+              <strong id="approvalMetric">—</strong
+              ><span class="metric-foot">Sobre el total de solicitudes</span>
+            </article>
+            <article class="metric">
+              <div class="metric-label">
+                Capital solicitado<span data-icon="arrow"></span>
+              </div>
+              <strong id="volumeMetric">—</strong
+              ><span class="metric-foot">MXN · expedientes con monto</span>
+            </article>
+          </div>
+          <div class="overview-grid">
+            <article class="panel activity-panel">
+              <div class="panel-heading">
+                <div>
+                  <h2>Actividad de solicitudes</h2>
+                  <p>Volumen recibido en los últimos 7 días</p>
+                </div>
+                <span class="chip">7 días · UTC</span>
+              </div>
+              <div
+                id="activityChart"
+                class="activity-chart"
+                aria-label="Solicitudes diarias"
+              ></div>
+              <div class="chart-caption">
+                <span><i class="indicator"></i>Solicitudes recibidas</span
+                ><span id="weekTotal"></span>
+              </div>
+            </article>
+            <article class="panel intelligence">
+              <div class="panel-heading">
+                <span class="ai-label">✧ ASISTENTE DE OPERACIONES</span
+                ><span class="chip" id="aiMode">Local</span>
+              </div>
+              <h2>Empieza por lo<br />que necesita atención.</h2>
+              <p>
+                Convierte los datos del expediente en un resumen claro,
+                verificaciones y un borrador para el cliente.
+              </p>
+              <div class="insight">
+                <span class="insight-icon" data-icon="document"></span>
+                <div>
+                  <strong id="docsInsight">— documentos por revisar</strong
+                  ><small>Completa la evidencia antes de decidir.</small>
+                </div>
+              </div>
+              <button class="button dark" id="reviewQueue">
+                Revisar expedientes <span>→</span></button
+              ><small class="ai-foot">La IA asiste. El equipo decide.</small>
+            </article>
+          </div>
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <h2>
+                  Solicitudes recientes
+                  <span class="subtle" id="recentCount"></span>
+                </h2>
+                <p>El contexto que necesitas para dar el siguiente paso.</p>
+              </div>
+              <a href="#applications" class="text-button"
+                >Ver todas <span>→</span></a
+              >
             </div>
-            <div class="decision-stats">
-              <span><b id="approvedValue">0%</b>Aprobacion</span>
-              <span><b id="rejectedValue">0%</b>Rechazo</span>
-              <span><b id="todayValue">0</b>Hoy</span>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Solicitante</th>
+                    <th>Monto solicitado</th>
+                    <th>Estado</th>
+                    <th>Capacidad</th>
+                    <th>Fecha</th>
+                    <th><span class="sr-only">Acciones</span></th>
+                  </tr>
+                </thead>
+                <tbody id="recentRows"></tbody>
+              </table>
             </div>
           </article>
-
-          <article class="metric-card accent-green">
-            <div class="metric-head">
-              <span>Total</span>
-              <strong id="totalApplications">0</strong>
-            </div>
-            <div class="stacked-chart" aria-label="Distribucion total por estado">
-              <i id="totalApprovedSegment" class="approved"></i>
-              <i id="totalRejectedSegment" class="rejected"></i>
-              <i id="totalPendingSegment" class="pending"></i>
-            </div>
-            <div class="metric-legend">
-              <span><b class="dot approved"></b>Aprobadas</span>
-              <span><b class="dot rejected"></b>Rechazadas</span>
-              <span><b class="dot pending"></b>Pendientes</span>
-            </div>
-          </article>
-          <article class="metric-card accent-blue">
-            <div class="metric-head">
-              <span>Riesgo</span>
-              <strong id="riskIndex">--</strong>
-            </div>
-            <div class="risk-dots" id="riskDots" aria-label="Indice visual de riesgo"></div>
-            <small id="riskCaption">Indice ponderado</small>
-          </article>
-          <article class="metric-card reason-card accent-rose">
-            <span>Motivo clave</span>
-            <div class="reason-box">
-              <strong id="topReason">Sin datos</strong>
-              <p id="topReasonDetail">Aun no hay una decision dominante.</p>
-              <code id="topReasonCodes">CODIGO: SIN_DATOS</code>
-            </div>
-            <small>Principal factor de rechazo</small>
-          </article>
+          <div class="footer-line">
+            <span
+              ><span class="indicator"></span> Decisiones trazables. Datos bajo
+              control.</span
+            ><span>CreditOS · v2.0</span>
+          </div>
         </section>
-
-        <section class="chart-grid">
-          <article class="panel chart-panel">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Distribucion</p>
-                <h2>Pipeline de decisiones</h2>
-              </div>
-            </div>
-            <div class="bars">
-              <div class="bar-row">
-                <span>Approved</span>
-                <div><i id="approvedBar"></i></div>
-                <b id="approvedCount">0</b>
-              </div>
-              <div class="bar-row">
-                <span>Rejected</span>
-                <div><i id="rejectedBar"></i></div>
-                <b id="rejectedCount">0</b>
-              </div>
-              <div class="bar-row">
-                <span>Pending docs</span>
-                <div><i id="pendingBar"></i></div>
-                <b id="pendingCount">0</b>
-              </div>
-            </div>
-          </article>
-        </section>
-
-        <section class="workflow-grid">
-          <article id="documento" class="panel document-panel">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Documento inteligente</p>
-                <h2>Extraccion y evaluacion automatica</h2>
-              </div>
-              <span class="status-pill" id="documentStatus">Listo</span>
-            </div>
-
-            <form id="documentForm" class="document-form">
-              <label class="file-drop wide">
-                <input name="file" type="file" accept="application/pdf" required />
-                <span>
-                  <b id="fileName">Seleccionar PDF</b>
-                  <small>Comprobante o expediente crediticio</small>
-                </span>
-              </label>
-
-              <label>
-                RFC
-                <input name="rfc" placeholder="TOMA900101AB1" />
-              </label>
-              <label>
-                CURP
-                <input name="curp" placeholder="TOMA900101MDFRRL08" />
-              </label>
-              <label>
-                Genero
-                <select name="gender">
-                  <option value="">Detectar</option>
-                  <option value="F">F</option>
-                  <option value="M">M</option>
-                  <option value="X">X</option>
-                </select>
-              </label>
-              <label>
-                Ingreso mensual
-                <input name="monthly_income" type="number" min="0" step="100" placeholder="18000" />
-              </label>
-              <label>
-                Antiguedad bancaria
-                <input name="bank_seniority_months" type="number" min="0" placeholder="24" />
-              </label>
-              <label class="check">
-                <input name="is_blacklisted" type="checkbox" />
-                <span>Lista negra</span>
-              </label>
-              <button class="primary-button wide" type="submit">Procesar documento</button>
-            </form>
-
-            <div class="document-result">
-              <div class="result-score">
-                <span id="documentDecision">--</span>
-                <strong id="documentScore">Score --</strong>
-              </div>
-              <dl>
-                <div>
-                  <dt>Nombre</dt>
-                  <dd id="extractedName">--</dd>
-                </div>
-                <div>
-                  <dt>Direccion</dt>
-                  <dd id="extractedAddress">--</dd>
-                </div>
-                <div>
-                  <dt>Documento</dt>
-                  <dd id="documentVerified">--</dd>
-                </div>
-                <div>
-                  <dt>Riesgo</dt>
-                  <dd id="documentRisk">--</dd>
-                </div>
-              </dl>
-              <p id="documentExplanation" class="result-explanation">Sin evaluacion reciente.</p>
-            </div>
-
-          </article>
-
-          <article id="nuevo" class="panel form-panel">
-            <div class="section-heading">
-              <div>
-                <p class="eyebrow">Alta rapida</p>
-                <h2>Nueva solicitud</h2>
-              </div>
-              <span class="status-pill" id="formStatus">Listo</span>
-            </div>
-            <form id="applicationForm">
-              <label>
-                Nombre
-                <input name="name" placeholder="Maria Torres" required />
-              </label>
-              <label>
-                RFC
-                <input name="rfc" placeholder="TOMA900101AB1" required />
-              </label>
-              <label>
-                CURP
-                <input name="curp" placeholder="TOMA900101MDFRRL08" required />
-              </label>
-              <label>
-                Genero
-                <select name="gender" required>
-                  <option value="F">F</option>
-                  <option value="M">M</option>
-                  <option value="X">X</option>
-                </select>
-              </label>
-              <label>
-                Ingreso mensual
-                <input name="monthly_income" type="number" min="0" step="100" value="18000" required />
-              </label>
-              <label>
-                Antiguedad bancaria
-                <input name="bank_seniority_months" type="number" min="0" value="24" required />
-              </label>
-              <label class="wide">
-                Direccion
-                <input name="address" placeholder="Av. Reforma 100, CDMX" />
-              </label>
-              <label class="check">
-                <input name="is_blacklisted" type="checkbox" />
-                <span>Lista negra</span>
-              </label>
-              <button class="primary-button wide" type="submit">Crear solicitud</button>
-            </form>
-          </article>
-        </section>
-
-        <section id="solicitudes" class="panel table-panel">
-          <div class="section-heading">
+        <section id="applications" class="page" hidden>
+          <div class="page-heading">
             <div>
-              <p class="eyebrow">Actividad</p>
-              <h2>Solicitudes recientes</h2>
+              <p class="eyebrow">GESTIÓN DE EXPEDIENTES</p>
+              <h1>Tu bandeja de solicitudes.</h1>
+              <p class="subtitle">
+                Busca, revisa la evidencia y registra cada decisión.
+              </p>
             </div>
-            <span class="status-pill" id="lastUpdate">--</span>
+            <button class="button primary new-case">
+              <span data-icon="plus"></span>Nueva solicitud
+            </button>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Estado</th>
-                  <th>Score</th>
-                  <th>Ingreso</th>
-                  <th>Riesgo</th>
-                  <th>Motivo</th>
-                </tr>
-              </thead>
-              <tbody id="applicationsTable"></tbody>
-            </table>
+          <article class="panel">
+            <div class="filters">
+              <label class="search"
+                ><span data-icon="search"></span
+                ><input
+                  id="search"
+                  type="search"
+                  placeholder="Buscar por nombre o RFC"
+                  aria-label="Buscar por nombre o RFC" /></label
+              ><select id="statusFilter" aria-label="Filtrar por estado">
+                <option value="">Todos los estados</option>
+                <option value="REVIEW">Por revisar</option>
+                <option value="APPROVED">Aprobadas</option>
+                <option value="REJECTED">Rechazadas</option></select
+              ><button class="button" id="exportButton">
+                <span data-icon="download"></span>Exportar CSV
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Solicitante</th>
+                    <th>Monto solicitado</th>
+                    <th>Estado</th>
+                    <th>Capacidad</th>
+                    <th>Fecha</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="allRows"></tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <span id="pageInfo"></span>
+              <div>
+                <button class="button compact" id="prevPage">← Anterior</button
+                ><button class="button compact" id="nextPage">
+                  Siguiente →
+                </button>
+              </div>
+            </div>
+          </article>
+        </section>
+        <section id="simulator" class="page" hidden>
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">ESCENARIOS DE FINANCIAMIENTO</p>
+              <h1>Explora las posibilidades.</h1>
+              <p class="subtitle">
+                Ajusta monto y plazo. Observa su efecto en la capacidad de pago.
+              </p>
+            </div>
           </div>
+          <div class="split">
+            <article class="panel">
+              <h2>Configura un escenario</h2>
+              <form id="simulateForm" class="form-grid">
+                <label
+                  >Ingreso mensual (MXN)<input
+                    name="monthly_income"
+                    type="number"
+                    value="35000"
+                    min="1"
+                    max="1000000000"
+                    step=".01"
+                    required /></label
+                ><label
+                  >Deuda mensual actual (MXN)<input
+                    name="monthly_debt"
+                    type="number"
+                    value="3000"
+                    min="0"
+                    max="1000000000"
+                    step=".01"
+                    required /></label
+                ><label
+                  >Monto del crédito (MXN)<input
+                    name="requested_amount"
+                    type="number"
+                    value="120000"
+                    min="1"
+                    max="100000000"
+                    step=".01"
+                    required /></label
+                ><label
+                  >Plazo (meses)<input
+                    name="term_months"
+                    type="number"
+                    value="24"
+                    min="1"
+                    max="120"
+                    required /></label
+                ><label
+                  >Tasa anual nominal (%)<input
+                    name="annual_rate"
+                    type="number"
+                    value="24"
+                    min="0"
+                    max="100"
+                    step=".01"
+                    required /></label
+                ><label
+                  >Antigüedad bancaria (meses)<input
+                    name="bank_seniority_months"
+                    type="number"
+                    value="36"
+                    min="0"
+                    max="1200"
+                    required /></label
+                ><button class="button primary full" type="submit">
+                  Calcular escenario <span>→</span>
+                </button>
+              </form>
+            </article>
+            <article class="panel simulation-result">
+              <span class="ai-label">ANÁLISIS DE CAPACIDAD</span>
+              <div id="simulationOutput">
+                <h2>Una decisión empieza<br />con buenos datos.</h2>
+                <p>
+                  Calcula el pago mensual, la carga de deuda y un monto
+                  orientativo según la capacidad declarada.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section id="guide" class="page" hidden>
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">CENTRO DE AYUDA</p>
+              <h1>Un flujo claro. De principio a fin.</h1>
+              <p class="subtitle">
+                Diseñado para asistir al equipo de análisis de crédito.
+              </p>
+            </div>
+          </div>
+          <div class="guide-grid">
+            <article class="panel">
+              <span class="step">01</span>
+              <h2>Recopila y confirma</h2>
+              <p>
+                Crea una solicitud o extrae campos de un PDF. Confirma siempre
+                la información detectada. Los documentos se procesan en memoria
+                y no se almacenan.
+              </p>
+            </article>
+            <article class="panel">
+              <span class="step">02</span>
+              <h2>Analiza con contexto</h2>
+              <p>
+                La política calcula capacidad con ingreso, deuda, plazo y tasa.
+                El índice interno de 0 a 100 es orientativo; no es un score de
+                buró ni una probabilidad de impago.
+              </p>
+            </article>
+            <article class="panel">
+              <span class="step">03</span>
+              <h2>Decide y deja evidencia</h2>
+              <p>
+                El analista prepara el caso. El administrador registra la
+                decisión y su motivo. Cada cambio queda en la bitácora; una
+                carga documental nueva reabre la revisión.
+              </p>
+            </article>
+          </div>
+          <article class="panel guide-detail">
+            <h2>IA con una función concreta</h2>
+            <p>
+              El copiloto genera resúmenes, listas de verificación y borradores
+              para el cliente. Si OpenAI no está configurado o no responde,
+              utiliza un resumen local claramente identificado. No se envían
+              nombres, RFC, CURP, domicilios ni texto de documentos al
+              proveedor.
+            </p>
+            <h2>Configurar tu espacio</h2>
+            <p>
+              Define <code>APP_PASSWORD</code> para el usuario
+              <code>admin</code> y opcionalmente
+              <code>ANALYST_PASSWORD</code> para <code>analyst</code>. Activa el
+              copiloto con <code>OPENAI_API_KEY</code> y el modelo con
+              <code>OPENAI_MODEL</code>. En Render, usa PostgreSQL mediante
+              <code>DATABASE_URL</code> para conservar expedientes entre
+              despliegues.
+            </p>
+            <p>
+              Este espacio corresponde a una sola organización. Antes de operar
+              con datos reales, configura credenciales individuales mediante tu
+              proveedor de identidad, respaldos y la política de crédito
+              aprobada por tu empresa.
+            </p>
+            <a href="/docs" target="_blank" rel="noopener" class="text-button"
+              >Consultar documentación de la API ↗</a
+            >
+          </article>
         </section>
       </main>
     </div>
-    <script src="/static/app.js"></script>
+    <dialog id="loginDialog" class="modal small">
+      <button class="close" data-close="loginDialog" aria-label="Cerrar">
+        ×
+      </button>
+      <div class="brandmark">c<span>•</span></div>
+      <p class="eyebrow">ESPACIO PRIVADO</p>
+      <h2>Bienvenido a CreditOS.</h2>
+      <p class="muted">Accede a los expedientes de tu organización.</p>
+      <form id="loginForm">
+        <label
+          >Usuario<input
+            name="username"
+            value="admin"
+            autocomplete="username"
+            maxlength="80"
+            required /></label
+        ><label
+          >Contraseña<input
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            maxlength="256"
+        /></label>
+        <p id="loginError" class="form-error" role="alert"></p>
+        <button class="button primary" type="submit">
+          Entrar al espacio →
+        </button>
+      </form>
+      <p class="helper" id="setupHint"></p>
+    </dialog>
+    <dialog id="newDialog" class="modal">
+      <button class="close" data-close="newDialog" aria-label="Cerrar">
+        ×
+      </button>
+      <p class="eyebrow">NUEVO EXPEDIENTE</p>
+      <h2>Todo empieza con una solicitud.</h2>
+      <p class="muted">
+        Los datos se guardarán en el espacio de tu organización.
+      </p>
+      <div class="extract-box">
+        <span data-icon="document"></span>
+        <div>
+          <strong>Completa los datos desde un PDF</strong
+          ><small
+            >Opcional · hasta 8 MB y 12 páginas · confirma la extracción</small
+          >
+        </div>
+        <label class="button compact file-button"
+          >Extraer PDF<input
+            id="extractFile"
+            type="file"
+            accept="application/pdf"
+        /></label>
+      </div>
+      <p id="extractNotice" class="helper" role="status"></p>
+      <form id="createForm" class="form-grid">
+        <label class="full"
+          >Nombre o razón social<input
+            name="name"
+            required
+            minlength="2"
+            maxlength="150"
+            autocomplete="organization"
+            placeholder="Ej. Comercial del Centro" /></label
+        ><label
+          >RFC<input
+            name="rfc"
+            required
+            maxlength="13"
+            placeholder="ABC010101AB1" /></label
+        ><label
+          >Ingreso mensual (MXN)<input
+            name="monthly_income"
+            type="number"
+            required
+            min="1"
+            max="1000000000"
+            step=".01"
+            placeholder="35000" /></label
+        ><label class="full"
+          >Domicilio<input
+            name="address"
+            required
+            minlength="5"
+            maxlength="400"
+            placeholder="Calle, número, colonia y ciudad" /></label
+        ><label
+          >Monto solicitado (MXN)<input
+            name="requested_amount"
+            type="number"
+            required
+            min="1"
+            max="100000000"
+            step=".01"
+            value="50000" /></label
+        ><label
+          >Plazo (meses)<input
+            name="term_months"
+            type="number"
+            required
+            min="1"
+            max="120"
+            value="24" /></label
+        ><label
+          >Deuda mensual actual (MXN)<input
+            name="monthly_debt"
+            type="number"
+            required
+            min="0"
+            max="1000000000"
+            step=".01"
+            value="0" /></label
+        ><label
+          >Tasa anual nominal (%)<input
+            name="annual_rate"
+            type="number"
+            required
+            min="0"
+            max="100"
+            step=".01"
+            value="24" /></label
+        ><label
+          >Antigüedad bancaria (meses)<input
+            name="bank_seniority_months"
+            type="number"
+            required
+            min="0"
+            max="1200"
+            value="24" /></label
+        ><label class="checkbox"
+          ><input name="is_blacklisted" type="checkbox" /> Existe una alerta
+          interna</label
+        >
+        <p class="helper full">
+          La evaluación utiliza datos financieros declarados. Toda solicitud
+          queda pendiente de revisión humana.
+        </p>
+        <button class="button primary full" type="submit">
+          Crear expediente <span>→</span>
+        </button>
+      </form>
+    </dialog>
+    <dialog id="caseDialog" class="drawer">
+      <button
+        class="close"
+        data-close="caseDialog"
+        aria-label="Cerrar expediente"
+      >
+        ×
+      </button>
+      <div id="caseContent"></div>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <script src="/static/app.js" defer></script>
   </body>
 </html>
